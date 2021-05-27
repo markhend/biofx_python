@@ -8,7 +8,7 @@ from typing import NamedTuple, List, TextIO
 
 class Args(NamedTuple):
     """ Command-line arguments """
-    file: List[TextIO]
+    files: List[TextIO]
     out_dir: str
 
 
@@ -21,7 +21,7 @@ def get_args() -> Args:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('file',
-                        help='Input DNA file',
+                        help='Input DNA file(s)',
                         metavar='FILE',
                         type=argparse.FileType('rt'),
                         nargs='+')
@@ -48,7 +48,7 @@ def main() -> None:
         os.makedirs(args.out_dir)
 
     num_files, num_seqs = 0, 0
-    for fh in args.file:
+    for fh in args.files:
         num_files += 1
         out_file = os.path.join(args.out_dir, os.path.basename(fh.name))
         out_fh = open(out_file, 'wt')

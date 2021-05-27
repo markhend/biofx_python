@@ -3,13 +3,14 @@
 
 import argparse
 import os
-import requests
-import sys
 from typing import NamedTuple, List, TextIO
+import sys
+import requests
 from Bio import SeqIO
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
     download_dir: str
 
@@ -48,8 +49,9 @@ def main() -> None:
 
     for file in files:
         prot_id, _ = os.path.splitext(os.path.basename(file))
-        if recs := list(SeqIO.parse(file, 'fasta')):
-            if matches := find_motif(str(recs[0].seq)):
+        recs = SeqIO.parse(file, 'fasta')
+        if rec := next(recs):
+            if matches := find_motif(str(rec.seq)):
                 pos = map(lambda p: p + 1, matches)
                 print('\n'.join([prot_id, ' '.join(map(str, pos))]))
 
@@ -82,10 +84,28 @@ def fetch_fasta(fh: TextIO, fasta_dir: str) -> List[str]:
 
 
 # --------------------------------------------------
+def is_match(seq: str) -> bool:
+    """ Find the N-glycosylation """
+
+    return len(seq) == 4 and (seq[0] == 'N' and seq[1] != 'P'
+                              and seq[2] in 'ST' and seq[3] != 'P')
+
+
+# --------------------------------------------------
+def test_is_match() -> None:
+    """ Test is_match """
+
+    assert not is_match('')
+    assert is_match('NASA')
+    assert is_match('NATA')
+    assert not is_match('NATAN')
+    assert not is_match('NPTA')
+    assert not is_match('NASP')
+
+
+# --------------------------------------------------
 def find_motif(text: str) -> List[int]:
     """ Find a pattern in some text """
-    def is_match(s: str) -> bool:
-        return s[0] == 'N' and s[1] != 'P' and s[2] in 'ST' and s[3] != 'P'
 
     kmers = list(enumerate(find_kmers(text, 4)))
     return [i for i, kmer in kmers if is_match(kmer)]
@@ -102,6 +122,7 @@ def test_find_motif() -> None:
     assert find_motif('ANXTX') == [1]
     assert find_motif('NNTSYS') == [0, 1]
     assert find_motif('XNNTSYS') == [1, 2]
+    assert find_motif('XNNTSYSXNNTSYS') == [1, 2, 8, 9]
 
 
 # --------------------------------------------------

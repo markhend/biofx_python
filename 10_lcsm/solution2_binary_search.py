@@ -2,15 +2,16 @@
 """ Longest Common Substring """
 
 import argparse
-import collections
 import random
+from collections import Counter
 from functools import partial
-from itertools import starmap
+from itertools import chain
+from typing import Callable, List, NamedTuple, TextIO
 from Bio import SeqIO
-from typing import Callable, Counter, List, NamedTuple, TextIO
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
 
 
@@ -45,14 +46,14 @@ def main() -> None:
     shortest = min(map(len, seqs))
 
     # Find a starting point
-    f = partial(common_kmers, seqs)
-    start = binary_search(f, 1, shortest)
+    common = partial(common_kmers, seqs)
+    start = binary_search(common, 1, shortest)
 
     if start >= 0:
         # Hill climb to find max
         candidates = []
         for k in range(start, shortest + 1):
-            if kmers := f(k):
+            if kmers := common(k):
                 candidates.append(random.choice(kmers))
             else:
                 break
@@ -72,12 +73,14 @@ def binary_search(f: Callable, low: int, high: int) -> int:
 
     if hi and lo:
         return high
-    elif not hi and lo:
+
+    if lo and not hi:
         return binary_search(f, low, mid)
-    elif hi and not lo:
+
+    if hi and not lo:
         return binary_search(f, mid, high)
-    else:
-        return -1
+
+    return -1
 
 
 # --------------------------------------------------
@@ -94,20 +97,13 @@ def test_binary_search() -> None:
 
 
 # --------------------------------------------------
-def common_kmers(xs: List[str], k: int) -> List[str]:
+def common_kmers(seqs: List[str], k: int) -> List[str]:
     """ Find k-mers common to all elements """
 
-    counts: Counter[str] = collections.Counter()
-
-    for kmers in map(lambda x: set(find_kmers(x, k)), xs):
-        counts.update(kmers)
-
-    n = len(xs)
-
-    def f(s, i):
-        return s if i == n else None
-
-    return list(filter(None, starmap(f, counts.items())))
+    kmers = [set(find_kmers(seq, k)) for seq in seqs]
+    counts = Counter(chain.from_iterable(kmers))
+    n = len(seqs)
+    return [kmer for kmer, freq in counts.items() if freq == n]
 
 
 # --------------------------------------------------

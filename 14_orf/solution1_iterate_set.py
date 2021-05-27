@@ -2,12 +2,12 @@
 """ Open Reading Frames """
 
 import argparse
-import sys
-from Bio import SeqIO, Seq
 from typing import NamedTuple, TextIO, List
+from Bio import SeqIO, Seq
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
 
 
@@ -34,8 +34,8 @@ def main() -> None:
     """ Make a jazz noise here """
 
     args = get_args()
-    if seqs := [str(rec.seq) for rec in SeqIO.parse(args.file, 'fasta')]:
-        rna = seqs[0].replace('T', 'U')
+    for rec in SeqIO.parse(args.file, 'fasta'):
+        rna = str(rec.seq).replace('T', 'U')
         orfs = set()
 
         for seq in [rna, Seq.reverse_complement(rna)]:
@@ -45,12 +45,10 @@ def main() -> None:
                         orfs.add(orf)
 
         print('\n'.join(sorted(orfs)))
-    else:
-        sys.exit(f'"{args.file.name}" contains no sequences.')
 
 
 # --------------------------------------------------
-def truncate(seq, k):
+def truncate(seq: str, k: int) -> str:
     """ Truncate a sequence to even division by k """
 
     length = len(seq)
@@ -59,7 +57,7 @@ def truncate(seq, k):
 
 
 # --------------------------------------------------
-def test_truncate():
+def test_truncate() -> None:
     """ Test truncate """
 
     seq = '0123456789'
@@ -93,8 +91,10 @@ def test_find_orfs() -> None:
     assert find_orfs('') == []
     assert find_orfs('M') == []
     assert find_orfs('*') == []
+    assert find_orfs('M*') == ['M']
     assert find_orfs('MAMAPR*') == ['MAMAPR', 'MAPR']
     assert find_orfs('MAMAPR*M') == ['MAMAPR', 'MAPR']
+    assert find_orfs('MAMAPR*MP*') == ['MAMAPR', 'MAPR', 'MP']
 
 
 # --------------------------------------------------

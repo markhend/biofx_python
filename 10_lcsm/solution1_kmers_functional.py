@@ -4,13 +4,14 @@
 import argparse
 import random
 import sys
-from itertools import chain, starmap
+from itertools import chain
 from collections import Counter
-from Bio import SeqIO
 from typing import List, NamedTuple, TextIO
+from Bio import SeqIO
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
 
 
@@ -59,10 +60,7 @@ def common_kmers(seqs: List[str], k: int) -> List[str]:
     kmers = [set(find_kmers(seq, k)) for seq in seqs]
     counts = Counter(chain.from_iterable(kmers))
     n = len(seqs)
-
-    return list(
-        filter(None, starmap(lambda s, i: s
-                             if i == n else None, counts.items())))
+    return [kmer for kmer, freq in counts.items() if freq == n]
 
 
 # --------------------------------------------------

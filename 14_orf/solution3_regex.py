@@ -3,12 +3,12 @@
 
 import argparse
 import re
-import sys
-from Bio import Seq, SeqIO
 from typing import List, NamedTuple, TextIO
+from Bio import Seq, SeqIO
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
 
 
@@ -35,8 +35,8 @@ def main() -> None:
     """ Make a jazz noise here """
 
     args = get_args()
-    if seqs := [str(rec.seq) for rec in SeqIO.parse(args.file, 'fasta')]:
-        rna = seqs[0].replace('T', 'U')
+    for rec in SeqIO.parse(args.file, 'fasta'):
+        rna = str(rec.seq).replace('T', 'U')
         orfs = set()
 
         for seq in [rna, Seq.reverse_complement(rna)]:
@@ -46,15 +46,26 @@ def main() -> None:
                         orfs.add(orf)
 
         print('\n'.join(sorted(orfs)))
-    else:
-        sys.exit(f'"{args.file.name}" contains no sequences.')
 
 
 # --------------------------------------------------
 def find_orfs(aa: str) -> List[str]:
     """ Find ORFs in AA sequence """
 
-    return [c.group(1) for c in re.finditer('(?=(M[^*]*)[*])', aa)]
+    # All on one line
+    # return re.findall('(?=(M[^*]*)[*])', aa)
+
+    # Use implicit string concatenation
+    pattern = (
+        '(?='    # start positive look-ahead to handle overlaps
+        '('      # start a capture group
+        'M'      # a literal M
+        '[^*]*'  # zero or more of anything not the asterisk
+        ')'      # end the capture group
+        '[*]'    # a literal asterisk
+        ')')     # end the look-ahead group
+
+    return re.findall(pattern, aa)
 
 
 # --------------------------------------------------
@@ -64,8 +75,10 @@ def test_find_orfs() -> None:
     assert find_orfs('') == []
     assert find_orfs('M') == []
     assert find_orfs('*') == []
+    assert find_orfs('M*') == ['M']
     assert find_orfs('MAMAPR*') == ['MAMAPR', 'MAPR']
     assert find_orfs('MAMAPR*M') == ['MAMAPR', 'MAPR']
+    assert find_orfs('MAMAPR*MP*') == ['MAMAPR', 'MAPR', 'MP']
 
 
 # --------------------------------------------------

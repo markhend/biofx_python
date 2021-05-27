@@ -2,8 +2,9 @@
 """ Compute GC content """
 
 import argparse
-from Bio import SeqIO
+import sys
 from typing import NamedTuple, TextIO, List, Tuple
+from Bio import SeqIO
 
 
 class Args(NamedTuple):
@@ -22,6 +23,8 @@ def get_args() -> Args:
     parser.add_argument('file',
                         metavar='FILE',
                         type=argparse.FileType('rt'),
+                        nargs='?',
+                        default=sys.stdin,
                         help='Input sequence file')
 
     args = parser.parse_args()
@@ -40,12 +43,12 @@ def main() -> None:
         # Iterate each base and compare to G or C, add 1 to counter
         gc = 0
         for base in rec.seq.upper():
-            if base == 'C' or base == 'G':
+            if base in ('C', 'G'):
                 gc += 1
         pct = (gc * 100) / len(rec.seq)
         seqs.append((pct, rec.id))
 
-    high = sorted(seqs)[-1]
+    high = max(seqs)
     print(f'{high[1]} {high[0]:0.6f}')
 
 

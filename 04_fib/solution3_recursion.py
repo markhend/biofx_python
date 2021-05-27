@@ -19,25 +19,25 @@ def get_args() -> Args:
         description='Calculate Fibonacci',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('n',
+    parser.add_argument('gen',
                         metavar='generations',
                         type=int,
                         help='Number of generations')
 
-    parser.add_argument('k',
+    parser.add_argument('litter',
                         metavar='litter',
                         type=int,
                         help='Size of litter per generation')
 
     args = parser.parse_args()
 
-    if not 1 <= args.n <= 40:
-        parser.error(f'generations "{args.n}" must be between 1 and 40')
+    if not 1 <= args.gen <= 40:
+        parser.error(f'generations "{args.gen}" must be between 1 and 40')
 
-    if not 1 <= args.k <= 5:
-        parser.error(f'litter "{args.k}" must be between 1 and 5')
+    if not 1 <= args.litter <= 5:
+        parser.error(f'litter "{args.litter}" must be between 1 and 5')
 
-    return Args(generations=args.n, litter=args.k)
+    return Args(generations=args.gen, litter=args.litter)
 
 
 # --------------------------------------------------
@@ -47,8 +47,7 @@ def main() -> None:
     args = get_args()
 
     def fib(n: int) -> int:
-        return 1 if n == 1 or n == 2 \
-            else fib(n - 2) * args.litter + fib(n - 1)
+        return 1 if n in (1, 2) else fib(n - 2) * args.litter + fib(n - 1)
 
     print(fib(args.generations))
 

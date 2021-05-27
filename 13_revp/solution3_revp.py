@@ -2,14 +2,14 @@
 """ Locating Restriction Sites """
 
 import argparse
-import sys
 import operator
-from common import find_kmers
-from Bio import SeqIO, Seq
 from typing import List, NamedTuple, TextIO
+from Bio import SeqIO, Seq
+from common import find_kmers
 
 
 class Args(NamedTuple):
+    """ Command-line arguments """
     file: TextIO
 
 
@@ -36,16 +36,13 @@ def main() -> None:
     """ Make a jazz noise here """
 
     args = get_args()
-    if seqs := [str(rec.seq) for rec in SeqIO.parse(args.file, 'fasta')]:
-        seq = seqs[0]
+    for rec in SeqIO.parse(args.file, 'fasta'):
         for k in range(4, 13):
-            for pos in revp(seq, k):
+            for pos in revp(str(rec.seq), k):
                 print(pos, k)
 
         # for k, pos in [(k, p) for k in range(4, 13) for p in revp(seq, k)]:
         #     print(pos, k)
-    else:
-        sys.exit(f'"{args.file.name}" contains no sequences.')
 
 
 # --------------------------------------------------
